@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { usePomodoroStore } from '../stores/pomodoroStore'
+import { startSilentAudio, stopSilentAudio, cleanupSilentAudio } from '../lib/silentAudio'
 
 export function usePomodoroTimer() {
   const { isRunning, tick } = usePomodoroStore()
@@ -51,9 +52,13 @@ export function usePomodoroTimer() {
     if (isRunning) {
       // Iniciar el timer en el worker
       workerRef.current.postMessage({ type: 'START' })
+      // Iniciar audio silencioso para prevenir pausa de pestaña (hack para Firefox)
+      startSilentAudio()
     } else {
       // Detener el timer en el worker
       workerRef.current.postMessage({ type: 'STOP' })
+      // Detener audio silencioso
+      stopSilentAudio()
     }
 
     // Cleanup: terminar el worker cuando el componente se desmonte
@@ -63,6 +68,8 @@ export function usePomodoroTimer() {
         workerRef.current.terminate()
         workerRef.current = null
       }
+      // Limpiar audio silencioso
+      cleanupSilentAudio()
     }
   }, [isRunning, tick])
 
