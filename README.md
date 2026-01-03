@@ -1,73 +1,150 @@
-# React + TypeScript + Vite
+# ⚡ Kaitorat
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+<div align="center">
 
-Currently, two official plugins are available:
+![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+**A personal productivity application with a Persona 5 Royal-inspired aesthetic**
 
-## React Compiler
+*Built with React, TypeScript, and PocketBase*
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+[Features](#-features) • [Getting Started](#-getting-started) • [Roadmap](#-roadmap)
 
-## Expanding the ESLint configuration
+</div>
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## ✨ Features
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### 🍅 Pomodoro Timer
+- ✅ **Full-featured Pomodoro timer** with work, short break, and long break sessions
+- 🔄 **Real-time synchronization** across multiple tabs/devices using PocketBase
+- ⚙️ **Customizable durations** with intuitive settings modal
+- 💾 **Persistent state** - timer continues even after closing the app
+- 🔊 **Audio notifications** on timer completion
+- 📊 **Session tracking** and statistics
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 🎨 Design
+- **Persona 5 Royal-inspired** theme with bold colors and sleek animations
+- **Smooth transitions** powered by Framer Motion
+- **Responsive design** for all screen sizes
+- **Modern UI** built with Shadcn UI components
+
+---
+
+## 🛠️ Tech Stack
+
+<table>
+<tr>
+<td align="center" width="120">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="48" height="48" alt="React" />
+  <br />React
+</td>
+<td align="center" width="120">
+  <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="48" height="48" alt="TypeScript" />
+  <br />TypeScript
+</td>
+<td align="center" width="120">
+  <img src="https://vitejs.dev/logo.svg" width="48" height="48" alt="Vite" />
+  <br />Vite
+</td>
+<td align="center" width="120">
+  <img src="https://raw.githubusercontent.com/devicons/devicon/v2.17.0/icons/tailwindcss/tailwindcss-original.svg" width="48" height="48" alt="Tailwind CSS" />
+  <br />Tailwind CSS
+</td>
+</tr>
+</table>
+
+- **State Management**: Zustand
+- **UI Components**: Shadcn UI
+- **Animations**: Framer Motion
+- **Backend**: PocketBase
+- **Authentication**: PocketBase Auth
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+ 
+- pnpm (recommended) or npm
+- PocketBase instance running
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/Kaitorat/frontend-web.git
+cd frontend-web
+
+# Install dependencies
+pnpm install
+
+# Start development server
+pnpm dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Environment Variables
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Create a `.env.local` file in the root directory:
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```env
+VITE_POCKETBASE_URL=http://127.0.0.1:8090
+VITE_POCKETBASE_EMAIL=your-email@example.com
+VITE_POCKETBASE_PASSWORD=your-password
 ```
+
+---
+
+## 📁 Project Structure
+
+```
+src/
+├── components/     # React components
+│   ├── dashboard/  # Dashboard and main views
+│   ├── features/   # Feature components (Timer, etc.)
+│   ├── layout/     # Layout components (Sidebar, etc.)
+│   └── ui/         # Reusable UI components
+├── stores/         # Zustand state management
+├── hooks/          # Custom React hooks
+├── lib/            # Utilities and configurations
+└── types/          # TypeScript type definitions
+```
+
+---
+
+## 🗺️ Roadmap
+
+### 🔜 Upcoming Features
+
+- [ ] **Habit Tracker** - Calendar-style habit tracking with streak calculation and statistics
+- [ ] Enhanced statistics dashboard
+- [ ] Mission/task management integration
+
+### 💡 Future Considerations
+
+- Mobile app version
+- Advanced analytics
+- Export data functionality
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+---
+
+<div align="center">
+
+**Built with ❤️ by IamKaleb21*
+
+</div>
