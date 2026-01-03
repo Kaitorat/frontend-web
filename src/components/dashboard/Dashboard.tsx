@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { WebBackground } from '../layout/WebBackground'
 import { Sidebar } from '../layout/Sidebar'
@@ -6,6 +6,11 @@ import { Timer } from '../features/Timer'
 import { Stats } from '../features/Stats'
 import { MissionLog } from '../features/MissionLog'
 import { fadeInUp } from '../../lib/animations'
+import { usePomodoroStore } from '../../stores/pomodoroStore'
+import { usePomodoroTimer } from '../../hooks/usePomodoroTimer'
+import { useAuth } from '../../hooks/useAuth'
+import { formatTime } from '../../lib/utils'
+import type { PomodoroType } from '../../types/pomodoro'
 
 const MOCK_MISSIONS = [
   { id: '1', title: 'Refactor Navigation Stack', active: true },
@@ -15,24 +20,94 @@ const MOCK_MISSIONS = [
   { id: '5', title: 'Update Documentation', active: false },
 ]
 
+// Función para convertir el modo del store al formato del componente
+const mapModeToDisplay = (mode: PomodoroType): 'POMODORO' | 'SHORT BREAK' | 'LONG BREAK' => {
+  switch (mode) {
+    case 'work':
+      return 'POMODORO'
+    case 'shortBreak':
+      return 'SHORT BREAK'
+    case 'longBreak':
+      return 'LONG BREAK'
+  }
+}
+
+// Función para convertir el modo del componente al formato del store
+const mapDisplayToMode = (mode: 'POMODORO' | 'SHORT BREAK' | 'LONG BREAK'): PomodoroType => {
+  switch (mode) {
+    case 'POMODORO':
+      return 'work'
+    case 'SHORT BREAK':
+      return 'shortBreak'
+    case 'LONG BREAK':
+      return 'longBreak'
+  }
+}
+
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Heist')
-  const [isRunning, setIsRunning] = useState(false)
-  const [timerMode, setTimerMode] = useState<'POMODORO' | 'SHORT BREAK' | 'LONG BREAK'>('POMODORO')
-  const [time, setTime] = useState('25:00')
-
-  const handleToggle = () => {
-    setIsRunning(!isRunning)
+  const [isInitialized, setIsInitialized] = useState(false)
+  
+  // Autenticación automática
+  const { isLoading, isAuth } = useAuth()
+  
+  // Store de Zustand
+  const {
+    timeRemaining,
+    isRunning,
+    mode,
+    start,
+    pause,
+    reset,
+    skip,
+    changeMode,
+    initialize,
+  } = usePomodoroStore()
+  
+  // Inicializar timer después de autenticarse
+  useEffect(() => {
+    if (!isLoading && isAuth && !isInitialized) {
+      initialize().then(() => {
+        setIsInitialized(true)
+      })
+    }
+  }, [isLoading, isAuth, isInitialized, initialize])
+  
+  // Hook del timer loop (solo si está inicializado)
+  usePomodoroTimer()
+  
+  // Mostrar loader mientras se autentica o inicializa
+  if (isLoading || !isInitialized) {
+    return (
+      <div className="flex w-full h-screen bg-[#101010] items-center justify-center">
+        <div className="text-white text-xl">Cargando...</div>
+      </div>
+    )
+  }
+  
+  // Mostrar error si no se pudo autenticar (opcional, para desarrollo puede continuar)
+  if (!isAuth) {
+    console.warn('No se pudo autenticar, pero la app continuará funcionando (modo offline)')
   }
 
-  const handleReset = () => {
-    setIsRunning(false)
-    setTime('25:00')
+  const handleToggle = async () => {
+    if (isRunning) {
+      pause()
+    } else {
+      await start()
+    }
   }
 
-  const handleSkip = () => {
-    setIsRunning(false)
-    // Lógica para cambiar al siguiente modo
+  const handleReset = async () => {
+    await reset()
+  }
+
+  const handleSkip = async () => {
+    await skip()
+  }
+
+  const handleModeChange = (newMode: 'POMODORO' | 'SHORT BREAK' | 'LONG BREAK') => {
+    changeMode(mapDisplayToMode(newMode))
   }
 
   const handleAddMission = () => {
@@ -53,7 +128,7 @@ export const Dashboard = () => {
       <WebBackground />
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* CONTENIDO PRINCIPAL (Grid Layout) */}
+      {/* CONTENIDO PRINCIPAL */}
       <motion.div 
         initial="hidden"
         animate="visible"
@@ -65,9 +140,9 @@ export const Dashboard = () => {
           onToggle={handleToggle}
           onReset={handleReset}
           onSkip={handleSkip}
-          time={time}
-          mode={timerMode}
-          onModeChange={setTimerMode}
+          time={formatTime(timeRemaining)}
+          mode={mapModeToDisplay(mode)}
+          onModeChange={handleModeChange}
         />
 
         {/* COLUMNA DERECHA: Info Contextual (Tasks & Stats) */}

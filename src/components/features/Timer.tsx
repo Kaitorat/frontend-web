@@ -1,6 +1,8 @@
-import { Play, Pause, RotateCcw, FastForward } from 'lucide-react'
+import { useState } from 'react'
+import { Play, Pause, RotateCcw, FastForward, Settings } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { fadeInUp, scaleIn, P5_TRANSITION, P5_AGGRESSIVE_TRANSITION } from '../../lib/animations'
+import { fadeInUp, P5_TRANSITION, P5_AGGRESSIVE_TRANSITION } from '../../lib/animations'
+import { TimerSettingsModal } from './TimerSettingsModal'
 
 interface TimerProps {
   isRunning: boolean
@@ -21,6 +23,7 @@ export const Timer = ({
   mode,
   onModeChange 
 }: TimerProps) => {
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const modes: Array<'POMODORO' | 'SHORT BREAK' | 'LONG BREAK'> = ['POMODORO', 'SHORT BREAK', 'LONG BREAK']
 
   return (
@@ -94,7 +97,7 @@ export const Timer = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
               transition={P5_AGGRESSIVE_TRANSITION}
-              className="text-[8rem] font-black text-white leading-none tracking-tighter tabular-nums drop-shadow-2xl"
+              className="text-[8rem] font-bold text-white leading-none tracking-tighter tabular-nums drop-shadow-2xl"
             >
               {time}
             </motion.span>
@@ -131,7 +134,7 @@ export const Timer = ({
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="flex gap-6"
+        className="flex gap-6 items-center"
       >
         <motion.button 
           onClick={onToggle}
@@ -183,7 +186,19 @@ export const Timer = ({
           className="w-14 h-14 bg-[#18181B] border border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-white hover:border-white transition-all">
           <FastForward size={20} />
         </motion.button>
+
+        <motion.button 
+          onClick={() => setSettingsOpen(true)}
+          aria-label="Settings"
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+          transition={P5_TRANSITION}
+          className="w-14 h-14 bg-[#18181B] border border-zinc-700 rounded-full flex items-center justify-center text-zinc-400 hover:text-[#D91A1A] hover:border-[#D91A1A] transition-all">
+          <Settings size={20} />
+        </motion.button>
       </motion.div>
+
+      <TimerSettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </motion.div>
   )
 }

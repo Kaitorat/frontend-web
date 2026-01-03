@@ -1,3 +1,5 @@
 export { StatCard } from './StatCard'
 export { TaskItem } from './TaskItem'
 export { SidebarItem } from './SidebarItem'
+export { Slider } from './slider'
+export * from './dialog'
