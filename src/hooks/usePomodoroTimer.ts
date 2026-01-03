@@ -1,17 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { usePomodoroStore } from '../stores/pomodoroStore'
 
-// Importar el worker usando la sintaxis de Vite
-import TimerWorker from '../workers/timer.worker?worker'
-
 export function usePomodoroTimer() {
   const { isRunning, tick } = usePomodoroStore()
   const workerRef = useRef<Worker | null>(null)
 
   useEffect(() => {
     // Crear el worker si no existe
+    // Usar new URL para compatibilidad con builds de producción
     if (!workerRef.current) {
-      workerRef.current = new TimerWorker()
+      workerRef.current = new Worker(
+        new URL('../workers/timer.worker.ts', import.meta.url),
+        { type: 'module' }
+      )
 
       // Escuchar mensajes del worker
       workerRef.current.onmessage = (e: MessageEvent) => {
