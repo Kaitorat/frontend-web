@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { pb } from '../lib/pocketbase'
 import type { PomodoroType, TimerState } from '../types/pomodoro'
+import { playTimerCompleteSound } from '../lib/sounds'
 
 interface PomodoroState {
   // Estado del timer (calculado)
@@ -305,8 +306,11 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     
     set({ timeRemaining: calculated })
 
-    // Si el tiempo terminó, pausar automáticamente
+    // Si el tiempo terminó, pausar automáticamente y reproducir sonido
     if (calculated <= 0 && state.isRunning) {
+      // Reproducir sonido de finalización
+      playTimerCompleteSound()
+      
       get().pause()
       // Auto-avanzar después de un delay
       setTimeout(() => {
