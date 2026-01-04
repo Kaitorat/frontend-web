@@ -6,9 +6,8 @@ export function usePomodoroTimer() {
   const { isRunning, tick } = usePomodoroStore()
   const workerRef = useRef<Worker | null>(null)
 
+  // Crear el worker una sola vez al montar
   useEffect(() => {
-    // Crear el worker si no existe
-    // Usar new URL para compatibilidad con builds de producción
     if (!workerRef.current) {
       workerRef.current = new Worker(
         new URL('../workers/timer.worker.ts', import.meta.url),
@@ -48,29 +47,33 @@ export function usePomodoroTimer() {
       }
     }
 
-    // Controlar el worker basado en isRunning
-    if (isRunning) {
-      // Iniciar el timer en el worker
-      workerRef.current.postMessage({ type: 'START' })
-      // Nota: startSilentAudio se llama desde start() en el store para cumplir con la política de autoplay
-    } else {
-      // Detener el timer en el worker
-      workerRef.current.postMessage({ type: 'STOP' })
-      // Detener audio silencioso
-      stopSilentAudio()
-    }
-
-    // Cleanup: terminar el worker cuando el componente se desmonte
+    // Cleanup solo en unmount real del componente
     return () => {
       if (workerRef.current) {
         workerRef.current.postMessage({ type: 'STOP' })
         workerRef.current.terminate()
         workerRef.current = null
       }
-      // Limpiar audio silencioso
       cleanupSilentAudio()
     }
-  }, [isRunning, tick])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Solo al montar/desmontar
+
+  // Controlar el worker basado en isRunning (efecto separado)
+  useEffect(() => {
+    if (!workerRef.current) return
+
+    if (isRunning) {
+      // Iniciar el timer en el worker
+      workerRef.current.postMessage({ type: 'START' })
+      // Nota: startSilentAudio se llama desde start() en el store
+    } else {
+      // Detener el timer en el worker
+      workerRef.current.postMessage({ type: 'STOP' })
+      // Detener audio silencioso solo cuando se pausa
+      stopSilentAudio()
+    }
+  }, [isRunning])
 
   // Hook para sincronizar cuando la pestaña vuelve a estar visible
   useEffect(() => {
