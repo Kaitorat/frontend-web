@@ -76,18 +76,20 @@ export const Dashboard = () => {
   // Hook del timer loop (solo si está inicializado)
   usePomodoroTimer()
 
-  // Force update cuando la pestaña vuelve a estar visible (fix para Firefox/Zen)
-  const [, forceUpdate] = useState(0)
+  // Key para forzar remount del Timer cuando la pestaña vuelve (fix para Firefox/Zen)
+  const [timerKey, setTimerKey] = useState(0)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        // Forzar re-render del componente
-        forceUpdate(n => n + 1)
+        console.log('[Dashboard] Tab visible, forcing Timer remount...')
+        // Cambiar la key fuerza a React a desmontar y volver a montar el Timer
+        setTimerKey(k => k + 1)
       }
     }
 
     const handleFocus = () => {
-      forceUpdate(n => n + 1)
+      console.log('[Dashboard] Window focused, forcing Timer remount...')
+      setTimerKey(k => k + 1)
     }
 
     document.addEventListener('visibilitychange', handleVisibility)
@@ -159,6 +161,7 @@ export const Dashboard = () => {
         className="flex-1 p-8 z-10 overflow-y-auto flex gap-8"
       >
         <Timer
+          key={timerKey}
           isRunning={isRunning}
           onToggle={handleToggle}
           onReset={handleReset}
