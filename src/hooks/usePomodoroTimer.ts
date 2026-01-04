@@ -77,18 +77,37 @@ export function usePomodoroTimer() {
 
   // Hook para sincronizar cuando la pestaña vuelve a estar visible
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && isRunning) {
-        console.log('[Timer] Tab active, syncing time...')
-        tick()
+    const syncTimer = () => {
+      const state = usePomodoroStore.getState()
+      if (state.isRunning) {
+        console.log('[Timer] Syncing time after tab focus...')
+        // Forzar múltiples ticks para asegurar que React actualice
+        state.tick()
+        // Segundo tick con pequeño delay para forzar re-render
+        setTimeout(() => {
+          usePomodoroStore.getState().tick()
+        }, 50)
       }
     }
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncTimer()
+      }
+    }
+
+    const handleFocus = () => {
+      syncTimer()
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
     }
-  }, [isRunning, tick])
+  }, []) // Sin dependencias para evitar closures stale
 
   return null
 }
