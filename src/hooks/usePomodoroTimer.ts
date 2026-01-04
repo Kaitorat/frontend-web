@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useCallback } from 'react'
 import { usePomodoroStore } from '../stores/pomodoroStore'
 import { stopSilentAudio, cleanupSilentAudio } from '../lib/silentAudio'
 

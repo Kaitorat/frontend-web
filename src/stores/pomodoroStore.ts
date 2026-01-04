@@ -155,6 +155,28 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
 
           // Solo actualizar si el cambio viene de otra pestaña (evitar loops)
           if (state.timerStateId === record.id) {
+            // Verificar si el estado local está corriendo pero el remoto dice que no
+            // Esto puede pasar si la suscripción se desconectó y reconectó
+            // En ese caso, confiar en el estado local si está corriendo
+            const localIsRunning = state.isRunning
+            const remoteIsRunning = record.isRunning
+            
+            // Si local está corriendo pero remoto dice que no, y tenemos startTime local,
+            // mantener el estado local corriendo (probablemente la suscripción se desconectó)
+            if (localIsRunning && !remoteIsRunning && state.startTime) {
+              // Recalcular desde el tiempo local
+              const calculated = state.calculateTimeRemaining()
+              // Solo actualizar otros campos, mantener isRunning local
+              set({
+                mode: record.mode,
+                sessionsCompleted: record.sessionsCompleted || 0,
+                initialTimeRemaining: record.initialTimeRemaining,
+                timeRemaining: calculated,
+                // NO actualizar isRunning ni startTime si local está corriendo
+              })
+              return
+            }
+            
             let calculatedTime = record.initialTimeRemaining
             let isRunning = record.isRunning
 
