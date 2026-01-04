@@ -24,9 +24,3 @@ dist-ssr
 *.sw?
 
 .playwright-mcp/*
-
-# Audio files (copyrighted content - keep locally only)
-public/timer-complete.mp3
-public/*.mp3
-public/*.wav
-public/*.ogg
