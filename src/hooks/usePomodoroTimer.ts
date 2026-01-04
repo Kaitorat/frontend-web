@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { usePomodoroStore } from '../stores/pomodoroStore'
-import { startSilentAudio, stopSilentAudio, cleanupSilentAudio } from '../lib/silentAudio'
+import { stopSilentAudio, cleanupSilentAudio } from '../lib/silentAudio'
 
 export function usePomodoroTimer() {
   const { isRunning, tick } = usePomodoroStore()
@@ -52,8 +52,7 @@ export function usePomodoroTimer() {
     if (isRunning) {
       // Iniciar el timer en el worker
       workerRef.current.postMessage({ type: 'START' })
-      // Iniciar audio silencioso para prevenir pausa de pestaña (hack para Firefox)
-      startSilentAudio()
+      // Nota: startSilentAudio se llama desde start() en el store para cumplir con la política de autoplay
     } else {
       // Detener el timer en el worker
       workerRef.current.postMessage({ type: 'STOP' })
@@ -70,6 +69,21 @@ export function usePomodoroTimer() {
       }
       // Limpiar audio silencioso
       cleanupSilentAudio()
+    }
+  }, [isRunning, tick])
+
+  // Hook para sincronizar cuando la pestaña vuelve a estar visible
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isRunning) {
+        console.log('[Timer] Tab active, syncing time...')
+        tick()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
   }, [isRunning, tick])
 

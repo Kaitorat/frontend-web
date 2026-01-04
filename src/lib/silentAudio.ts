@@ -21,15 +21,36 @@ function createSilentAudioBuffer(context: AudioContext): AudioBuffer {
  * Inicia la reproducción del audio silencioso en bucle
  * Esto previene que el navegador pause la pestaña
  */
-export function startSilentAudio() {
-  if (isPlaying) return
-
+/**
+ * Inicializa el contexto de audio. Debe llamarse dentro de un evento de usuario (click, etc.)
+ */
+export async function initSilentAudioContext() {
   try {
-    // Crear contexto de audio si no existe
     if (!silentAudioContext) {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext
       silentAudioContext = new AudioContextClass()
     }
+
+    if (silentAudioContext.state === 'suspended') {
+      await silentAudioContext.resume()
+    }
+  } catch (error) {
+    console.warn('[SilentAudio] Error inicializando contexto:', error)
+  }
+}
+
+/**
+ * Inicia la reproducción del audio silencioso en bucle
+ * Esto previene que el navegador pause la pestaña
+ */
+export async function startSilentAudio() {
+  if (isPlaying) return
+
+  try {
+    // Asegurar que el contexto esté inicializado
+    await initSilentAudioContext()
+
+    if (!silentAudioContext) return
 
     // Crear buffer silencioso si no existe
     if (!silentAudioBuffer) {
@@ -78,13 +99,13 @@ export function stopSilentAudio() {
  */
 export function cleanupSilentAudio() {
   stopSilentAudio()
-  
+
   if (silentAudioContext) {
     silentAudioContext.close().catch(() => {
       // Ignorar errores al cerrar
     })
     silentAudioContext = null
   }
-  
+
   silentAudioBuffer = null
 }
