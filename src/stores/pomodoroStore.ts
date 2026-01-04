@@ -2,24 +2,25 @@ import { create } from 'zustand'
 import { pb } from '../lib/pocketbase'
 import type { PomodoroType, TimerState } from '../types/pomodoro'
 import { playTimerCompleteSound } from '../lib/sounds'
+import { startSilentAudio } from '../lib/silentAudio'
 
 interface PomodoroState {
   // Estado del timer (calculado)
   timeRemaining: number // en segundos (calculado en tiempo real)
   isRunning: boolean
   mode: PomodoroType
-  
+
   // Configuración
   workDuration: number // 25 minutos = 1500 segundos
   shortBreakDuration: number // 5 minutos = 300 segundos
   longBreakDuration: number // 15 minutos = 900 segundos
   sessionsCompleted: number
-  
+
   // Estado en PocketBase
   timerStateId: string | null
   startTime: Date | null // timestamp cuando se inició
   initialTimeRemaining: number // tiempo inicial cuando se empezó
-  
+
   // Acciones
   initialize: () => Promise<void>
   start: () => Promise<void>
@@ -113,13 +114,13 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
       // Calcular tiempo restante basado en el estado guardado
       let calculatedTime = timerState.initialTimeRemaining
       let isRunning = timerState.isRunning
-      
+
       if (timerState.isRunning && timerState.startTime) {
         const start = new Date(timerState.startTime).getTime()
         const now = Date.now()
         const elapsed = Math.floor((now - start) / 1000)
         calculatedTime = Math.max(0, timerState.initialTimeRemaining - elapsed)
-        
+
         // Si el tiempo terminó, marcar como pausado
         if (calculatedTime <= 0) {
           calculatedTime = 0
@@ -151,7 +152,7 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
         const state = get()
         if (e.action === 'update' && e.record) {
           const record = e.record as unknown as TimerState
-          
+
           // Solo actualizar si el cambio viene de otra pestaña (evitar loops)
           if (state.timerStateId === record.id) {
             // Verificar si el estado local está corriendo pero el remoto dice que no
@@ -178,13 +179,13 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
             
             let calculatedTime = record.initialTimeRemaining
             let isRunning = record.isRunning
-            
+
             if (record.isRunning && record.startTime) {
               const start = new Date(record.startTime).getTime()
               const now = Date.now()
               const elapsed = Math.floor((now - start) / 1000)
               calculatedTime = Math.max(0, record.initialTimeRemaining - elapsed)
-              
+
               if (calculatedTime <= 0) {
                 calculatedTime = 0
                 isRunning = false
@@ -213,6 +214,9 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     if (state.isRunning || state.timeRemaining <= 0 || !state.timerStateId) return
 
     const now = new Date()
+
+    // Iniciar audio silencioso inmediatamente mientras estamos en el evento de usuario
+    startSilentAudio().catch(console.error)
 
     try {
       await pb.collection('timer_states').update(state.timerStateId, {
@@ -259,10 +263,10 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     const state = get()
     if (!state.timerStateId) return
 
-    const defaultTime = state.mode === 'work' 
-      ? state.workDuration 
-      : state.mode === 'shortBreak' 
-        ? state.shortBreakDuration 
+    const defaultTime = state.mode === 'work'
+      ? state.workDuration
+      : state.mode === 'shortBreak'
+        ? state.shortBreakDuration
         : state.longBreakDuration
 
     try {
@@ -287,8 +291,8 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
     const state = get()
     if (!state.timerStateId) return
 
-    const nextMode: PomodoroType = 
-      state.mode === 'work' 
+    const nextMode: PomodoroType =
+      state.mode === 'work'
         ? state.sessionsCompleted % 4 === 3 ? 'longBreak' : 'shortBreak'
         : 'work'
 
@@ -325,14 +329,14 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
   tick: () => {
     const state = get()
     const calculated = get().calculateTimeRemaining()
-    
+
     set({ timeRemaining: calculated })
 
     // Si el tiempo terminó, pausar automáticamente y reproducir sonido
     if (calculated <= 0 && state.isRunning) {
       // Reproducir sonido de finalización
       playTimerCompleteSound()
-      
+
       get().pause()
       // Auto-avanzar después de un delay
       setTimeout(() => {
@@ -387,7 +391,7 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
 
       // Obtener el estado actual después de guardar
       const state = get()
-      
+
       // Calcular la duración del modo actual con los nuevos valores
       const currentDuration = state.mode === 'work'
         ? work
@@ -404,7 +408,7 @@ export const usePomodoroStore = create<PomodoroState>((set, get) => ({
           timeRemaining: currentDuration,
           initialTimeRemaining: currentDuration,
         })
-        
+
         // Si hay un timerStateId, también actualizar en PocketBase para sincronización
         if (state.timerStateId) {
           await pb.collection('timer_states').update(state.timerStateId, {

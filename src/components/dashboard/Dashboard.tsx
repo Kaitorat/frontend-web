@@ -47,10 +47,10 @@ const mapDisplayToMode = (mode: 'POMODORO' | 'SHORT BREAK' | 'LONG BREAK'): Pomo
 export const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('Heist')
   const [isInitialized, setIsInitialized] = useState(false)
-  
+
   // Autenticación automática
   const { isLoading, isAuth } = useAuth()
-  
+
   // Store de Zustand
   const {
     timeRemaining,
@@ -63,7 +63,7 @@ export const Dashboard = () => {
     changeMode,
     initialize,
   } = usePomodoroStore()
-  
+
   // Inicializar timer después de autenticarse
   useEffect(() => {
     if (!isLoading && isAuth && !isInitialized) {
@@ -72,10 +72,35 @@ export const Dashboard = () => {
       })
     }
   }, [isLoading, isAuth, isInitialized, initialize])
-  
+
   // Hook del timer loop (solo si está inicializado)
   usePomodoroTimer()
-  
+
+  // Key para forzar remount del Timer cuando la pestaña vuelve (fix para Firefox/Zen)
+  const [timerKey, setTimerKey] = useState(0)
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        console.log('[Dashboard] Tab visible, forcing Timer remount...')
+        // Cambiar la key fuerza a React a desmontar y volver a montar el Timer
+        setTimerKey(k => k + 1)
+      }
+    }
+
+    const handleFocus = () => {
+      console.log('[Dashboard] Window focused, forcing Timer remount...')
+      setTimerKey(k => k + 1)
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+    window.addEventListener('focus', handleFocus)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      window.removeEventListener('focus', handleFocus)
+    }
+  }, [])
+
   // Mostrar loader mientras se autentica o inicializa
   if (isLoading || !isInitialized) {
     return (
@@ -84,7 +109,7 @@ export const Dashboard = () => {
       </div>
     )
   }
-  
+
   // Mostrar error si no se pudo autenticar (opcional, para desarrollo puede continuar)
   if (!isAuth) {
     console.warn('No se pudo autenticar, pero la app continuará funcionando (modo offline)')
@@ -119,7 +144,7 @@ export const Dashboard = () => {
   }
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
@@ -129,18 +154,19 @@ export const Dashboard = () => {
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* CONTENIDO PRINCIPAL */}
-      <motion.div 
+      <motion.div
         initial="hidden"
         animate="visible"
         variants={fadeInUp}
         className="flex-1 p-8 z-10 overflow-y-auto flex gap-8"
       >
-        <Timer 
+        <Timer
+          key={timerKey}
           isRunning={isRunning}
           onToggle={handleToggle}
           onReset={handleReset}
           onSkip={handleSkip}
-          time={formatTime(timeRemaining)}
+          time={formatTime(isRunning ? usePomodoroStore.getState().calculateTimeRemaining() : timeRemaining)}
           mode={mapModeToDisplay(mode)}
           onModeChange={handleModeChange}
         />
@@ -148,7 +174,7 @@ export const Dashboard = () => {
         {/* COLUMNA DERECHA: Info Contextual (Tasks & Stats) */}
         <div className="flex-1 flex flex-col gap-6 max-w-[400px]">
           <Stats streak={12} hours={4.5} />
-          <MissionLog 
+          <MissionLog
             missions={MOCK_MISSIONS}
             onAddMission={handleAddMission}
             onViewAll={handleViewAll}
