@@ -2,8 +2,11 @@ import { useEffect, useRef } from 'react'
 import { usePomodoroStore } from '../stores/pomodoroStore'
 import { stopSilentAudio, cleanupSilentAudio } from '../lib/silentAudio'
 
+// Guardar el título original para restaurarlo
+const originalTitle = typeof document !== 'undefined' ? document.title : 'Kaitorat'
+
 export function usePomodoroTimer() {
-  const { isRunning, tick } = usePomodoroStore()
+  const { isRunning, tick, timeRemaining } = usePomodoroStore()
   const workerRef = useRef<Worker | null>(null)
 
   // Crear el worker una sola vez al montar
@@ -74,6 +77,22 @@ export function usePomodoroTimer() {
       stopSilentAudio()
     }
   }, [isRunning])
+
+  // Actualizar el título de la pestaña con el tiempo restante cuando está corriendo
+  useEffect(() => {
+    if (isRunning) {
+      const minutes = Math.floor(timeRemaining / 60)
+      const seconds = timeRemaining % 60
+      document.title = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')} - ${originalTitle}`
+    } else {
+      document.title = originalTitle
+    }
+
+    // Cleanup: restaurar título al desmontar
+    return () => {
+      document.title = originalTitle
+    }
+  }, [isRunning, timeRemaining])
 
   // Hook para sincronizar cuando la pestaña vuelve a estar visible
   useEffect(() => {
